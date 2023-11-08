@@ -1,4 +1,4 @@
-module github.com/projectdiscovery/asyncsqs
+module github.com/ngoyal16/asyncsqs
 
 go 1.17
 
