@@ -1,9 +1,9 @@
 # asyncsqs
 
-[![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go)](https://pkg.go.dev/github.com/prashanthpai/asyncsqs?tab=doc)
-[![Build, Unit Tests, Linters Status](https://github.com/prashanthpai/asyncsqs/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/prashanthpai/asyncsqs/actions/workflows/test.yml)
-[![codecov](https://codecov.io/gh/prashanthpai/asyncsqs/branch/master/graph/badge.svg)](https://codecov.io/gh/prashanthpai/asyncsqs)
-[![Go Report Card](https://goreportcard.com/badge/github.com/prashanthpai/asyncsqs?clear_cache=2)](https://goreportcard.com/report/github.com/prashanthpai/asyncsqs)
+[![Go.Dev reference](https://img.shields.io/badge/go.dev-reference-blue?logo=go)](https://pkg.go.dev/github.com/ngoyal16/asyncsqs?tab=doc)
+[![Build, Unit Tests, Linters Status](https://github.com/ngoyal16/asyncsqs/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/ngoyal16/asyncsqs/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/ngoyal16/asyncsqs/branch/master/graph/badge.svg)](https://codecov.io/gh/ngoyal16/asyncsqs)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ngoyal16/asyncsqs?clear_cache=2)](https://goreportcard.com/report/github.com/ngoyal16/asyncsqs)
 [![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 
 asyncsqs wraps around [SQS client](https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/sqs#Client)
@@ -36,7 +36,7 @@ $ go mod init github.com/my/hellosqs
 And then add asyncsqs as a dependency to your existing or new project:
 
 ```sh
-$ go get github.com/prashanthpai/asyncsqs
+$ go get github.com/ngoyal16/asyncsqs
 ```
 
 ###### Write Code
@@ -49,7 +49,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/prashanthpai/asyncsqs"
+	"github.com/ngoyal16/asyncsqs"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"

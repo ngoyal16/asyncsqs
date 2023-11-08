@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/prashanthpai/asyncsqs"
+	"github.com/ngoyal16/asyncsqs"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
