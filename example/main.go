@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/ngoyal16/asyncsqs"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,6 +18,10 @@ const (
 	queueURL = "https://sqs.us-east-1.amazonaws.com/xxxxxxxxxxxx/qqqqqqqqqqqq"
 )
 
+var (
+	client *asyncsqs.BufferedClient
+)
+
 func main() {
 	// Create a SQS client with appropriate credentials/IAM role, region etc.
 	awsCfg, err := config.LoadDefaultConfig(context.Background())
@@ -26,11 +31,16 @@ func main() {
 	sqsClient := sqs.NewFromConfig(awsCfg)
 
 	// Create a asyncsqs buffered client; you'd have one per SQS queue
-	client, err := asyncsqs.NewBufferedClient(asyncsqs.Config{
+	client, err = asyncsqs.NewBufferedClient(asyncsqs.Config{
 		SQSClient:            sqsClient,
 		QueueURL:             queueURL,
+		SendBatchEnabled:     true,
+		DeleteBatchEnabled:   true,
+		ReceiveBatchEnabled:  true,
+		ReceiveWaitTime:      int32(20),
 		OnSendMessageBatch:   sendResponseHandler,
 		OnDeleteMessageBatch: deleteResponseHandler,
+		OnReceiveMessage:     receiveResponseHander,
 	})
 	if err != nil {
 		log.Fatalf("asyncsqs.NewBufferedClient() failed: %v", err)
@@ -47,23 +57,20 @@ func main() {
 	}
 
 	// receive via normal SQS client and delete via async SQS client
-	for count := 0; count < 100; {
-		resp, err := sqsClient.ReceiveMessage(context.Background(), &sqs.ReceiveMessageInput{
-			QueueUrl:            aws.String(queueURL),
-			MaxNumberOfMessages: int32(10),
-			WaitTimeSeconds:     int32(20),
-		})
-		if err != nil {
-			log.Fatalf("sqsClient.ReceiveMessage() failed: %v", err)
+	for {
+		stats := client.Stats()
+		if stats.MessagesReceived == 100 {
+			break
 		}
-		log.Printf("received messages; count = %d\n", len(resp.Messages))
 
-		for _, message := range resp.Messages {
-			_ = client.DeleteMessageAsync(types.DeleteMessageBatchRequestEntry{
-				Id:            aws.String(strconv.Itoa(count)),
-				ReceiptHandle: message.ReceiptHandle,
-			})
-			count++
+		client.ReceiveMessages()
+	}
+
+	for {
+		stats := client.Stats()
+
+		if stats.MessagesDeleted == 100 {
+			break
 		}
 	}
 }
@@ -71,6 +78,7 @@ func main() {
 func sendResponseHandler(output *sqs.SendMessageBatchOutput, err error) {
 	if err != nil {
 		log.Printf("send returned error: %v", err)
+		return
 	}
 	for _, s := range output.Successful {
 		log.Printf("message send successful: msg id = %s", *s.Id)
@@ -80,9 +88,28 @@ func sendResponseHandler(output *sqs.SendMessageBatchOutput, err error) {
 	}
 }
 
+func receiveResponseHander(output *sqs.ReceiveMessageOutput, err error) {
+	if err != nil {
+		log.Printf("send returned error: %v", err)
+		return
+	}
+
+	if output.Messages != nil {
+		for _, m := range output.Messages {
+			log.Printf("message received successful: msg id = %s", *m.MessageId)
+
+			_ = client.DeleteMessageAsync(types.DeleteMessageBatchRequestEntry{
+				Id:            aws.String(uuid.New().String()),
+				ReceiptHandle: m.ReceiptHandle,
+			})
+		}
+	}
+}
+
 func deleteResponseHandler(output *sqs.DeleteMessageBatchOutput, err error) {
 	if err != nil {
 		log.Printf("send returned error: %v", err)
+		return
 	}
 	for _, s := range output.Successful {
 		log.Printf("message delete successful: msg id = %s", *s.Id)
