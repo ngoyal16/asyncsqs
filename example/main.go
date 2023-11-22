@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/google/uuid"
+	"github.com/ngoyal16/asyncsqs"
 	"log"
 	"strconv"
 
-	"github.com/google/uuid"
-	"github.com/ngoyal16/asyncsqs"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 )
@@ -22,7 +21,7 @@ var (
 	client *asyncsqs.BufferedClient
 )
 
-func main() {
+func AsyncSQS(maxMessages uint64) {
 	// Create a SQS client with appropriate credentials/IAM role, region etc.
 	awsCfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
@@ -37,10 +36,10 @@ func main() {
 		SendBatchEnabled:     true,
 		DeleteBatchEnabled:   true,
 		ReceiveBatchEnabled:  true,
-		ReceiveWaitTime:      int32(20),
+		ReceiveWaitTime:      int32(10),
 		OnSendMessageBatch:   sendResponseHandler,
 		OnDeleteMessageBatch: deleteResponseHandler,
-		OnReceiveMessage:     receiveResponseHander,
+		OnReceiveMessage:     receiveResponseHandler,
 	})
 	if err != nil {
 		log.Fatalf("asyncsqs.NewBufferedClient() failed: %v", err)
@@ -49,7 +48,7 @@ func main() {
 	// flushed/dispatched and resources like goroutines are cleaned-up
 	defer client.Stop()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; uint64(i) < maxMessages; i++ {
 		_ = client.SendMessageAsync(types.SendMessageBatchRequestEntry{
 			Id:          aws.String(strconv.Itoa(i)),
 			MessageBody: aws.String(strconv.Itoa(i)),
@@ -59,7 +58,7 @@ func main() {
 	// receive via normal SQS client and delete via async SQS client
 	for {
 		stats := client.Stats()
-		if stats.MessagesReceived == 100 {
+		if stats.MessagesReceived == maxMessages {
 			break
 		}
 
@@ -69,10 +68,14 @@ func main() {
 	for {
 		stats := client.Stats()
 
-		if stats.MessagesDeleted == 100 {
+		if stats.MessagesDeleted == maxMessages {
 			break
 		}
 	}
+}
+
+func main() {
+	AsyncSQS(uint64(100))
 }
 
 func sendResponseHandler(output *sqs.SendMessageBatchOutput, err error) {
@@ -88,7 +91,7 @@ func sendResponseHandler(output *sqs.SendMessageBatchOutput, err error) {
 	}
 }
 
-func receiveResponseHander(output *sqs.ReceiveMessageOutput, err error) {
+func receiveResponseHandler(output *sqs.ReceiveMessageOutput, err error) {
 	if err != nil {
 		log.Printf("send returned error: %v", err)
 		return
