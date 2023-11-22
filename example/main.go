@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/google/uuid"
-	"github.com/ngoyal16/asyncsqs"
 	"log"
 	"strconv"
 
+	"github.com/google/uuid"
+	"github.com/ngoyal16/asyncsqs"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 )
